@@ -138,7 +138,7 @@ Released under the MIT License
                         $data.queue.selected = limit;
                         if (($data.queue.count + limit) > settings.queueSizeLimit && settings.queueSizeLimit !== 0) {
                             if ($.inArray('onError', settings.overrideEvents) < 0) {
-                                alert('The maximum number of queue items has been reached (' + settings.queueSizeLimit + ').  Please select fewer files.');
+                                alert('The maximum number of queue items has been reached (' + settings.queueSizeLimit + '). Please select fewer files.');
                             }
                             // Trigger the error event
                             if (typeof settings.onError === 'function') {
@@ -196,7 +196,7 @@ Released under the MIT License
                     if (($data.queue.count + limit) > settings.queueSizeLimit && settings.queueSizeLimit !== 0) {
                         // Check if the queueSizeLimit was reached
                         if ($.inArray('onError', settings.overrideEvents) < 0) {
-                            alert('The maximum number of queue items has been reached (' + settings.queueSizeLimit + ').  Please select fewer files.');
+                            alert('The maximum number of queue items for this particular upload cycle has been reached (' + settings.queueSizeLimit + '). Please select fewer files. You can upload more in a future batch.');
                         }
                         // Trigger the onError event
                         if (typeof settings.onError === 'function') {
@@ -778,7 +778,6 @@ Released under the MIT License
                     $data.uploadFile.call($this, file);
 
                 } else {
-
                     // Check if the upload limit was reached
                     if (($data.uploads.count + $data.uploads.current) < settings.uploadLimit || settings.uploadLimit === 0) {
                         if (!keepVars) {
@@ -811,14 +810,12 @@ Released under the MIT License
                                 $data.uploadFile(_file, true);
                             }
                         });
-                        if ($('#' + settings.queueID).find('.uploadifive-queue-item').not('.error, .complete').size() === 0) {
-                            $data.queueComplete();
-                        }
                     } else {
                         if ($data.uploads.current === 0) {
                             if ($.inArray('onError', settings.overrideEvents) < 0) {
-                                if ($data.filesToUpload() > 0 && settings.uploadLimit !== 0) {
-                                    alert('The maximum upload limit has been reached.');
+                                if ($data.filesToUpload() > 0 && settings.uploadLimit !== 0 || $data.uploads.count >= settings.uploadLimit) {
+//                                if ($data.filesToUpload() > 0 && settings.uploadLimit !== 0) {
+									alert('The maximum upload limit for this particular upload cycle has been reached (' + settings.uploadLimit + '). You can upload more in a future batch.');
                                 }
                             }
                             // Trigger the onError event
@@ -826,6 +823,9 @@ Released under the MIT License
                                 settings.onError.call($this, 'UPLOAD_LIMIT_EXCEEDED', $data.filesToUpload());
                             }
                         }
+                    }
+                    if ($('#' + settings.queueID).find('.uploadifive-queue-item').not('.error, .complete').length === 0) {
+                        $data.queueComplete();
                     }
 
                 }
@@ -862,6 +862,15 @@ Released under the MIT License
 
             });
 
+        },
+
+        // External method to remove an item from the total count - like needing to change the total count when an item is
+        // externally removed.
+        removeItemFromTotal : function() {
+			$data = this.data('uploadifive');
+			let newTotal = $data.uploads.count - 1;
+			methods.clearQueue.call(this);
+			$data.uploads.count = newTotal;
         }
 
     };
